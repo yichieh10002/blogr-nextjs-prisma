@@ -2,3 +2,7 @@ node_modules/
 .next/
 .DS_STORE
 .env
+.vercel
+.env*.local
+
+/generated/prisma

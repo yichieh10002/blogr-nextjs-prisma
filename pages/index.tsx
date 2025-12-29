@@ -1,31 +1,50 @@
-import React from "react"
-import { GetStaticProps } from "next"
-import Layout from "../components/Layout"
-import Post, { PostProps } from "../components/Post"
+import React from "react";
+import { GetStaticProps } from "next";
+import Layout from "../components/Layout";
+import Post, { PostProps } from "../components/Post";
+import prisma from "../lib/prisma";
 
+// ===============================
+// 1️⃣ 從資料庫讀取「已發布文章」
+// ===============================
 export const getStaticProps: GetStaticProps = async () => {
-  const feed = [
-    {
-      id: "1",
-      title: "Prisma is the perfect ORM for Next.js",
-      content: "[Prisma](https://github.com/prisma/prisma) and Next.js go _great_ together!",
-      published: false,
+  const feed = await prisma.post.findMany({
+    where: { published: true },
+    orderBy: { createdAt: "desc" }, // 👉 從新到舊排序（你真正想要的）
+    include: {
       author: {
-        name: "Nikolas Burk",
-        email: "burk@prisma.io",
+        select: { name: true },
       },
     },
-  ]
-  return { 
-    props: { feed }, 
-    revalidate: 10 
-  }
-}
+  });
+
+  // ===============================
+  // ⭐【新增】序列化 Date（重點）
+  // Next.js 的 props 不能直接帶 Date
+  // 所以要在「這裡」轉成 string
+  // ===============================
+  const serializedFeed = feed.map((post) => ({
+    ...post,
+    createdAt: post.createdAt.toISOString(),
+  }));
+
+  // ===============================
+  // 2️⃣ ISR（Incremental Static Regeneration）
+  // 每 10 秒重新生成一次頁面
+  // ===============================
+  return {
+    props: { feed: serializedFeed }, // 👉 用「轉換後」的資料
+    revalidate: 10,
+  };
+};
 
 type Props = {
-  feed: PostProps[]
-}
+  feed: PostProps[];
+};
 
+// ===============================
+// 3️⃣ 主頁元件（只負責畫畫面）
+// ===============================
 const Blog: React.FC<Props> = (props) => {
   return (
     <Layout>
@@ -39,6 +58,8 @@ const Blog: React.FC<Props> = (props) => {
           ))}
         </main>
       </div>
+
+      {/* 樣式是教學裡直接寫在這個檔案的 */}
       <style jsx>{`
         .post {
           background: white;
@@ -54,7 +75,7 @@ const Blog: React.FC<Props> = (props) => {
         }
       `}</style>
     </Layout>
-  )
-}
+  );
+};
 
-export default Blog
+export default Blog;
