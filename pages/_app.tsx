@@ -1,7 +1,12 @@
 import { SessionProvider } from "next-auth/react";
-import { AppProps } from "next/app";
+import type { AppProps } from "next/app";
+import type { Session } from "next-auth";
 
-const App = ({ Component, pageProps }: AppProps) => {
+type AppPropsWithSession = AppProps<{
+  session: Session | null;
+}>;
+
+const App = ({ Component, pageProps }: AppPropsWithSession) => {
   return (
     <SessionProvider session={pageProps.session}>
       <Component {...pageProps} />
@@ -10,3 +15,16 @@ const App = ({ Component, pageProps }: AppProps) => {
 };
 
 export default App;
+
+// import { SessionProvider } from "next-auth/react";
+// import { AppProps } from "next/app";
+
+// const App = ({ Component, pageProps }: AppProps) => {
+//   return (
+//     <SessionProvider session={pageProps.session}>
+//       <Component {...pageProps} />
+//     </SessionProvider>
+//   );
+// };
+
+// export default App;
